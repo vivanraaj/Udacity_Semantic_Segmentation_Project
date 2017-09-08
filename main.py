@@ -126,7 +126,8 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     # do adam optimizer
 
     logits = tf.reshape(nn_last_layer, (-1, num_classes))
-    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = logits, labels = correct_label ))
+    class_labels = tf.reshape(correct_label, (-1, num_classes))
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = logits, labels = class_labels ))
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=0.1).minimize(cost) 
     
     return logits, optimizer, cost
@@ -155,14 +156,13 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     # see the helper get batches 
     for epoch_i in range(epochs):
         for image,label in get_batches_fn(batch_size):
-            _ , loss = sess.run([train_op, cross_entropy_loss], \
+            _, loss = sess.run([train_op, cross_entropy_loss], \
                 feed_dict = {input_image: image,
                             correct_label: label,
                             keep_prob: .50, learning_rate: learn_rate})
             # Show every <show_every_n_batches> batches
             if idx % 20 == 0:
-                print('Epoch {:>3} /   train_loss = {:.3f}'.format(
-                    epoch_i,loss))
+                print("loss: {}".format(loss))
             idx += 1
 
 tests.test_train_nn(train_nn)
@@ -196,9 +196,11 @@ def run():
 
         # TODO: Build NN using load_vgg, layers, and optimize function
         # put a tf placeholder
+        # placeholder tensors
+        correct_label = tf.placeholder(tf.float32, [None, image_shape[0], image_shape[1], num_classes])
         learning_rate = tf.placeholder(tf.float32)
-        correct_label = tf.placeholder(tf.float32, shape=(None, None, None,
-                        num_classes))
+        keep_prob = tf.placeholder(tf.float32)
+
 
         input_image, keep_prob, layer3_out, layer4_out, layer7_out = load_vgg(sess, vgg_path)
         layer_output = layers(layer3_out, layer4_out, layer7_out, num_classes)
@@ -213,7 +215,7 @@ def run():
         epochs = 15
         batch_size = 1
 
-        train_nn(sess, epochs, batch_size, get_batches_fn, optimizer, loss,
+        train_nn(sess, epochs, batch_size, get_batches_fn, optimizer, cost,
             input_image, correct_label, keep_prob, learning_rate)
 
         # TODO: Save inference data using helper.save_inference_samples
