@@ -71,13 +71,13 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
 
     # resample vgg_layer7_out by 1x1 Convolution: To go from ?x5x18x4096 to ?x5x18x2
     conv_vgg_7 = tf.layers.conv2d(vgg_layer7_out, num_classes, 1, padding ='same',
-     kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
+     kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
     # resample vgg_layer4_out out by 1x1 Convolution: To go from ?x10x36x512 to ?x10x36x2
     conv_vgg_4 = tf.layers.conv2d(vgg_layer4_out, num_classes, 1, padding ='same',
-     kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
+     kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
     # resample vgg_layer3_out out by 1x1 Convolution: To go from ?x20x72x256 to ?x20x72x2
     conv_vgg_3 = tf.layers.conv2d(vgg_layer3_out, num_classes, 1, padding ='same',
-     kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3))
+     kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
 
     # now do deconvulutional layer and upsample it to original size
@@ -86,20 +86,20 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
 
     # upsample vgg_layer7_out_resampled: by factor of 2 in order to go from ?x5x18x2 to ?x10x36x2
     output_1 = tf.layers.conv2d_transpose(conv_vgg_7, num_classes, 4,2,padding = 'same',
-     kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3) )
-
+     kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
+ 
     # gives out the dimension below
     # tf.Print(output, [tf.shape(output)])
     combined_layer1 = tf.add(output_1, conv_vgg_4)
 
     # fcn_layer2: upsample combined_layer1 by factor of 2 in order to go from ?x10x36x2 to ?x20x72x2
     output_2 = tf.layers.conv2d_transpose(combined_layer1, num_classes, 4,2,padding = 'same',
-     kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3) )
+     kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
 
     combined_layer2 = tf.add(output_2, conv_vgg_3)
     # upsample combined_layer2 by factor of 8 in order to go from ?x20x72x2 to ?x160x576x2
     final_output = tf.layers.conv2d_transpose(combined_layer2, num_classes, 16,8,padding = 'same',
-     kernel_regularizer = tf.contrib.layers.l2_regularizer(1e-3) )
+     kernel_initializer=tf.truncated_normal_initializer(stddev=0.01))
     
     # now upsample by 2, by 2 then 8
     # do regulairzer for every layer and right padding
